@@ -34,6 +34,7 @@ import (
 var cfgFile string
 var userProxy string
 var sitelist, tcplist, vdcNA, vdcEU, rdcNA, rdcEU []string
+var idleEndpoint string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -90,6 +91,7 @@ services used during typical Sauce Labs usage.`,
 		vdcEU = []string{"http://ondemand.eu-central-1.saucelabs.com:80", "https://ondemand.eu-central-1.saucelabs.com:443"}
 		rdcNA = []string{"https://us1.appium.testobject.com/wd/hub/session"}
 		rdcEU = []string{"https://eu1.appium.testobject.com/wd/hub/session"}
+		idleEndpoint = "http://localhost:8080/"
 		naVDCApi, euVDCApi := assembleVDCEndpoints()
 
 		// Collect the flags to decide which diagnostics to run
@@ -104,6 +106,10 @@ services used during typical Sauce Labs usage.`,
 		whichCloud, err := cmd.Flags().GetString("cloud")
 		if err != nil {
 			log.Fatal("Could not get the cloud flag. ", err)
+		}
+		runLongIdleConnections, err := cmd.Flags().GetBool("idle")
+		if err != nil {
+			log.Fatal("Could not get the idle flag. ", err)
 		}
 		whichCloud = strings.ToLower(whichCloud)
 		whichDC = strings.ToLower(whichDC)
@@ -155,6 +161,9 @@ services used during typical Sauce Labs usage.`,
 		if runTCP {
 			diagnostics.TCPConns(tcplist, proxyURL)
 		}
+		if runLongIdleConnections {
+			diagnostics.LongIdleConnections(idleEndpoint)
+		}
 		if runDefault(runTCP) && whichDC == "all" && whichCloud == "all" {
 			diagnostics.VDCServices(vdcNA)
 			diagnostics.VDCServices(vdcEU)
@@ -196,6 +205,7 @@ func init() {
 	rootCmd.Flags().Bool("log", false, "enables logging and creates a nethelp.log file.  Will automatically append data to the file in a non-destructive manner.")
 	rootCmd.Flags().String("cloud", "all", "options are: VDC or RDC.  Select which services you'd like to test, Virtual Device Cloud or Real Device Cloud respectively.")
 	rootCmd.Flags().String("dc", "all", "options are: EU or NA.  Choose which data centers you want run diagnostics against, Europe or North America respectively.")
+	rootCmd.Flags().Bool("idle", false, "tries to identify the timeout for long idle connections")
 
 	// http client settings
 	http.DefaultTransport = &http.Transport{
