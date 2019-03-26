@@ -50,7 +50,9 @@ func _SendRequest(endpoint string, timeout int) (*http.Response, error) {
 func LongIdleConnections(endpoint string) {
 	got_reply := false
 	// seconds := 15 * 60 // 15 minutes
-	seconds := 50
+	lowerBound := 0
+	upperBound := 130
+	seconds := upperBound
 	log.Debug("Initial timeout is ", seconds, " seconds.")
 	_, err := url.Parse(endpoint) // Doesn't work?
 	if err != nil {
@@ -65,13 +67,20 @@ func LongIdleConnections(endpoint string) {
 		elapsed := time.Since(start)
 		if resp != nil {
 			log.Info("Got a reply after ", elapsed, " seconds.")
-			got_reply = true
+
+			if seconds == upperBound || (upperBound - lowerBound) < 10 {
+				got_reply = true
+			} else {
+				lowerBound = seconds
+				seconds = seconds + ((upperBound - seconds) / 2)
+				log.Debug("Changing timeout to ", seconds, " seconds.")
+			}
 		} else if err != nil {
 			log.Error("Didn't receive any reply after ", elapsed, " seconds: request cancelled.")
 			log.Error(err)
-			seconds = seconds / 2.0
-			if seconds < 10 {
-				log.Info("Timeout is less than 10 seconds: Abort.")
+			seconds = lowerBound + (upperBound - lowerBound) / 2.0
+			if (upperBound - seconds) < 10 {
+				log.Debug("Approximation is less than 10 seconds: Abort.")
 				break
 			}
 			log.Debug("Changing timeout to ", seconds, " seconds.")
@@ -81,4 +90,6 @@ func LongIdleConnections(endpoint string) {
 			break
 		}
 	}
+
+	log.Info("Approximate time for the longuest idle connection possible is ", lowerBound, " seconds.")
 }
