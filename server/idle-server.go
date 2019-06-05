@@ -1,11 +1,11 @@
 package main
 
 import (
-    "flag"
-    "fmt"
-    "net/http"
-    "time"
-    "strconv"
+	"flag"
+	"fmt"
+	"net/http"
+	"strconv"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -22,23 +22,28 @@ func handler() http.Handler {
 		log.Debug("Received request for a timeout of ", i, " seconds")
 
 		time.Sleep(time.Duration(i) * time.Second)
+		// if (i > 120) {
+		// time.Sleep(time.Duration(i * 2) * time.Second)
+		// } else {
+		// time.Sleep(time.Duration(i) * time.Second)
+		// }
 		fmt.Fprintln(w, "Waited for", i, "seconds")
 		log.Debug("request answered after ", i, " seconds")
 	})
 }
 
 func main() {
-    port := flag.String("p", "8080", "port to listen to")
-    verbose := flag.Bool("v", false, "verbose mode")
-    flag.Parse()
+	port := flag.String("p", "8080", "port to listen to")
+	verbose := flag.Bool("v", false, "verbose mode")
+	flag.Parse()
 
 	log.SetLevel(log.WarnLevel)
 
 	s := &http.Server{
-		Addr:           fmt.Sprint(":", *port),
-		Handler:        handler(),
-		WriteTimeout:   20 * time.Minute,
-		IdleTimeout: 20 * time.Minute,
+		Addr:         fmt.Sprint(":", *port),
+		Handler:      handler(),
+		WriteTimeout: 20 * time.Minute,
+		IdleTimeout:  20 * time.Minute,
 	}
 
 	if *verbose {

@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 	"path"
-    "strconv"
-
+	"strconv"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -38,7 +37,7 @@ func RDCServices(rdcEndpoints []string) {
 }
 
 func _SendRequest(endpoint string, timeout int) (*http.Response, error) {
-	client := &http.Client{Timeout: time.Duration(timeout + 2) * time.Second}
+	client := &http.Client{Timeout: time.Duration(timeout+2) * time.Second}
 	u, _ := url.Parse(endpoint)
 	u.Path = path.Join(u.Path, strconv.Itoa(timeout))
 	endpoint = u.String()
@@ -49,9 +48,8 @@ func _SendRequest(endpoint string, timeout int) (*http.Response, error) {
 
 func LongIdleConnections(endpoint string) {
 	got_reply := false
-	// seconds := 15 * 60 // 15 minutes
 	lowerBound := 0
-	upperBound := 130
+	upperBound := 15 * 60 // 15 minutes
 	seconds := upperBound
 	log.Debug("Initial timeout is ", seconds, " seconds.")
 	_, err := url.Parse(endpoint) // Doesn't work?
@@ -68,7 +66,7 @@ func LongIdleConnections(endpoint string) {
 		if resp != nil {
 			log.Info("Got a reply after ", elapsed, " seconds.")
 
-			if seconds == upperBound || (upperBound - lowerBound) < 10 {
+			if seconds == upperBound || (upperBound-lowerBound) < 10 {
 				got_reply = true
 			} else {
 				lowerBound = seconds
@@ -78,7 +76,7 @@ func LongIdleConnections(endpoint string) {
 		} else if err != nil {
 			log.Error("Didn't receive any reply after ", elapsed, " seconds: request cancelled.")
 			log.Error(err)
-			seconds = lowerBound + (upperBound - lowerBound) / 2.0
+			seconds = lowerBound + (upperBound-lowerBound)/2.0
 			if (upperBound - seconds) < 10 {
 				log.Debug("Approximation is less than 10 seconds: Abort.")
 				break

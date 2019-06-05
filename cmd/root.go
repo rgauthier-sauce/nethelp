@@ -91,7 +91,7 @@ services used during typical Sauce Labs usage.`,
 		vdcEU = []string{"http://ondemand.eu-central-1.saucelabs.com:80", "https://ondemand.eu-central-1.saucelabs.com:443"}
 		rdcNA = []string{"https://us1.appium.testobject.com/wd/hub/session"}
 		rdcEU = []string{"https://eu1.appium.testobject.com/wd/hub/session"}
-		idleEndpoint = "http://localhost:8080/"
+		idleEndpoint = "http://localhost:8080"
 		naVDCApi, euVDCApi := assembleVDCEndpoints()
 
 		// Collect the flags to decide which diagnostics to run
@@ -111,6 +111,13 @@ services used during typical Sauce Labs usage.`,
 		if err != nil {
 			log.Fatal("Could not get the idle flag. ", err)
 		}
+		if runLongIdleConnections {
+			idleEndpoint, err = cmd.Flags().GetString("idle-endpoint")
+			if err != nil {
+				log.Fatal("The --idle-endpoint flag is missing. ")
+			}
+		}
+
 		whichCloud = strings.ToLower(whichCloud)
 		whichDC = strings.ToLower(whichDC)
 
@@ -151,11 +158,11 @@ services used during typical Sauce Labs usage.`,
 			if whichDC == "eu" {
 				diagnostics.VDCServices(vdcEU)
 				diagnostics.RDCServices(rdcEU)
-				diagnostics.VdcAPI(euVDCApi)	
+				diagnostics.VdcAPI(euVDCApi)
 			} else if whichDC == "na" {
 				diagnostics.VDCServices(vdcNA)
 				diagnostics.RDCServices(rdcNA)
-				diagnostics.VdcAPI(naVDCApi)			
+				diagnostics.VdcAPI(naVDCApi)
 			}
 		}
 		if runTCP {
@@ -206,6 +213,7 @@ func init() {
 	rootCmd.Flags().String("cloud", "all", "options are: VDC or RDC.  Select which services you'd like to test, Virtual Device Cloud or Real Device Cloud respectively.")
 	rootCmd.Flags().String("dc", "all", "options are: EU or NA.  Choose which data centers you want run diagnostics against, Europe or North America respectively.")
 	rootCmd.Flags().Bool("idle", false, "tries to identify the timeout for long idle connections")
+	rootCmd.Flags().String("idle-endpoint", "http://localhost:8080", "the endpoint used to simulate idle connections")
 
 	// http client settings
 	http.DefaultTransport = &http.Transport{
